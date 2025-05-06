@@ -43,8 +43,8 @@ def create_payment(amount: int = Query(..., description="Kwota w groszach")):
         "description": "Zakup produktu",
         "email": "klient@example.com",
         "country": "PL",
-        "urlReturn": "https://twoja-nazwa.onrender.com/return",
-        "urlStatus": "https://twoja-nazwa.onrender.com/status",
+        "urlReturn": "https://fastapi-p24.onrender.com/return",
+        "urlStatus": "https://fastapi-p24.onrender.com/status",
         "sign": sign
     }
 
@@ -85,7 +85,7 @@ async def return_page():
     <html>
         <head><title>Dziękujemy</title></head>
         <body style='text-align:center;padding-top:40px;font-family:sans-serif;'>
-            <h1>✅ Płatność zakończona</h1>
+            <h1>✅ Płatność zakończona sukcesem</h1>
             <p>Dziękujemy za Twoją darowiznę!</p>
         </body>
     </html>
