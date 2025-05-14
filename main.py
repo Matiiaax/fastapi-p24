@@ -2,6 +2,7 @@ from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import hashlib, json, base64, uuid, requests
+import os
 
 app = FastAPI()
 
@@ -13,9 +14,11 @@ app.add_middleware(
 )
 
 # 🔐 Wklej swoje dane z panelu Przelewy24
-MERCHANT_ID = 343371
-API_KEY = "78ea7ccbf4bb7035609fb6f79af424b0"
-CRC = "3dd1ac86b0fdb027"
+ 
+API_KEY = os.getenv("P24_API_KEY")
+MERCHANT_ID = os.getenv("P24_MERCHANT_ID")
+CRC = os.getenv("P24_CRC")
+
 
 @app.get("/create-payment")
 def create_payment(amount: int = Query(..., description="Kwota w groszach")):
@@ -85,8 +88,17 @@ async def return_page():
     <html>
         <head><title>Dziękujemy</title></head>
         <body style='text-align:center;padding-top:40px;font-family:sans-serif;'>
-            <h1>✅ Płatność zakończona sukcesem</h1>
+            <h1>✅ Płatność zakończona</h1>
             <p>Dziękujemy za Twoją darowiznę!</p>
         </body>
     </html>
     """)
+
+
+@app.get("/test-env")
+def test_env():
+    return {
+        "merchant_id": os.getenv("P24_MERCHANT_ID"),
+        "api_key": os.getenv("P24_API_KEY")[:4] + "..." if os.getenv("P24_API_KEY") else None,
+        "crc": os.getenv("P24_CRC")[:4] + "..." if os.getenv("P24_CRC") else None
+    }
