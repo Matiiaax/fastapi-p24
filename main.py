@@ -93,12 +93,3 @@ async def return_page():
         </body>
     </html>
     """)
-
-
-@app.get("/test-env")
-def test_env():
-    return {
-        "merchant_id": os.getenv("P24_MERCHANT_ID"),
-        "api_key": os.getenv("P24_API_KEY")[:4] + "..." if os.getenv("P24_API_KEY") else None,
-        "crc": os.getenv("P24_CRC")[:4] + "..." if os.getenv("P24_CRC") else None
-    }
