@@ -15,9 +15,9 @@ app.add_middleware(
 
 # 🔐 Wklej swoje dane z panelu Przelewy24
 
-API_KEY = os.getenv("P24_API_KEY")
-MERCHANT_ID = int(os.getenv("P24_MERCHANT_ID"))
-CRC = os.getenv("P24_CRC")
+API_KEY = "04b37c21b8a21f07fc1e4ede838a604e"
+MERCHANT_ID = 347149
+CRC = "f5909f6105929a02"
 
 
 @app.get("/create-payment")
@@ -47,7 +47,7 @@ def create_payment(amount: int = Query(..., description="Kwota w groszach")):
         "email": "klient@example.com",
         "country": "PL",
         "language": "pl",
-        "urlReturn": "https://fastapi-p24.onrender.com/return",
+        "urlReturn": "https://fastapi-p24.onrender.com/return?sessionId=...",
         "urlStatus": "https://fastapi-p24.onrender.com/status",
         "sign": sign
     }
@@ -84,17 +84,20 @@ async def handle_status(request: Request):
     return {"status": "OK"}
 
 @app.get("/return")
-async def return_page():
-    return HTMLResponse("""
+async def return_page(sessionId: str = ""):
+    return HTMLResponse(f"""
     <html>
-        <head><title>Dziękujemy</title></head>
+        <head><title>Płatność zakończona</title></head>
         <body style='text-align:center;padding-top:40px;font-family:sans-serif;'>
-            <h1>✅ Płatność zakończona</h1>
-            <p>Dziękujemy za Twoją darowiznę!</p>
+            <h1>✅ Dziękujemy!</h1>
+            <p>Twoja darowizna została przyjęta.</p>
+            <button onclick="window.location.href='parafiaapp://success?sessionId={sessionId}'"
+                    style='padding:10px 20px;font-size:18px;margin-top:20px;'>
+                Powróć do aplikacji
+            </button>
         </body>
     </html>
     """)
-
 
 @app.get("/test-env")
 def test_env():
