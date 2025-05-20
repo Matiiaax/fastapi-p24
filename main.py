@@ -81,6 +81,13 @@ def create_payment(amount: int = Query(..., description="Kwota w groszach")):
 async def handle_status(request: Request):
     data = await request.json()
     print("📥 Odebrano webhook od P24:", data)
+
+    if data.get("status") == "TRUE":
+        session_id = data.get("sessionId")
+        order_id = data.get("orderId")
+        amount = data.get("amount")
+        verify_transaction(session_id, order_id, amount)
+
     return {"status": "OK"}
 
 @app.get("/return")
@@ -119,3 +126,66 @@ def debug_auth():
         "CRC_START": CRC[:4] + "...",
         "auth_header": f"Basic {encoded}"
     }
+
+
+
+def verify_transaction(session_id: str, order_id: int, amount: int, currency="PLN"):
+    data = {
+        "sessionId": session_id,
+        "orderId": order_id,
+        "amount": amount,
+        "currency": currency,
+        "crc": CRC
+    }
+
+    json_data = json.dumps(data, separators=(',', ':'))
+    sign = hashlib.sha384(json_data.encode()).hexdigest()
+
+    payload = {
+        "merchantId": MERCHANT_ID,
+        "posId": MERCHANT_ID,
+        "sessionId": session_id,
+        "amount": amount,
+        "currency": currency,
+        "orderId": order_id,
+        "sign": sign
+    }
+
+    auth = base64.b64encode(f"{MERCHANT_ID}:{API_KEY}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {auth}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(
+        "https://secure.przelewy24.pl/api/v1/transaction/verify",
+        headers=headers,
+        json=payload
+    )
+
+    print("✅ Weryfikacja odpowiedź:", response.status_code, response.text)
+    return response.status_code == 200
+
+
+
+@app.get("/check-payment-status")
+def check_payment_status(sessionId: str):
+    auth = base64.b64encode(f"{MERCHANT_ID}:{API_KEY}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {auth}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(
+        f"https://secure.przelewy24.pl/api/v1/transaction/by/sessionId/{sessionId}",
+        headers=headers
+    )
+
+    if response.status_code == 200:
+        status = response.json().get("data", {}).get("status", "UNKNOWN")
+        return {"status": status}
+    else:
+        return {
+            "status": "ERROR",
+            "details": response.text
+        }
