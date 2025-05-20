@@ -14,10 +14,10 @@ app.add_middleware(
 )
 
 # 🔐 Wklej swoje dane z panelu Przelewy24
- 
-API_KEY = os.getenv("P24_API_KEY")
-MERCHANT_ID = os.getenv("P24_MERCHANT_ID")
-CRC = os.getenv("P24_CRC")
+
+API_KEY = "04b37c21b8a21f07fc1e4ede838a604e"
+MERCHANT_ID = 347149
+CRC = "f5909f6105929a02"
 
 
 @app.get("/create-payment")
@@ -93,3 +93,12 @@ async def return_page():
         </body>
     </html>
     """)
+
+
+@app.get("/test-env")
+def test_env():
+    return {
+        "merchant_id": os.getenv("P24_MERCHANT_ID"),
+        "api_key": os.getenv("P24_API_KEY")[:4] + "..." if os.getenv("P24_API_KEY") else None,
+        "crc": os.getenv("P24_CRC")[:4] + "..." if os.getenv("P24_CRC") else None
+    }
