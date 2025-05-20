@@ -46,6 +46,7 @@ def create_payment(amount: int = Query(..., description="Kwota w groszach")):
         "description": "Zakup produktu",
         "email": "klient@example.com",
         "country": "PL",
+        "language": "pl",
         "urlReturn": "https://fastapi-p24.onrender.com/return",
         "urlStatus": "https://fastapi-p24.onrender.com/status",
         "sign": sign
