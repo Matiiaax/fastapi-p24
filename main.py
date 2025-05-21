@@ -128,6 +128,37 @@ def debug_auth():
     }
 
 
+@app.get("/check-payment-status")
+def check_payment_status(sessionId: str):
+    url = f"https://secure.przelewy24.pl/api/v1/transaction/by/sessionId/{sessionId}"
+
+    auth = base64.b64encode(f"{MERCHANT_ID}:{API_KEY}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {auth}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json().get("data", {})
+        return {
+            "sessionId": sessionId,
+            "status": data.get("status"),
+            "isFinished": data.get("isFinished"),
+            "verified": data.get("verified"),
+            "orderId": data.get("orderId"),
+            "amount": data.get("amount"),
+            "currency": data.get("currency")
+        }
+    else:
+        return {
+            "error": response.status_code,
+            "message": response.text
+        }
+
+
+
 
 def verify_transaction(session_id: str, order_id: int, amount: int, currency="PLN"):
     data = {
