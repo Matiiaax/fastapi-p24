@@ -199,24 +199,3 @@ def verify_transaction(session_id: str, order_id: int, amount: int, currency="PL
 
 
 
-@app.get("/check-payment-status")
-def check_payment_status(sessionId: str):
-    auth = base64.b64encode(f"{MERCHANT_ID}:{API_KEY}".encode()).decode()
-    headers = {
-        "Authorization": f"Basic {auth}",
-        "Content-Type": "application/json"
-    }
-
-    response = requests.get(
-        f"https://secure.przelewy24.pl/api/v1/transaction/by/sessionId/{sessionId}",
-        headers=headers
-    )
-
-    if response.status_code == 200:
-        status = response.json().get("data", {}).get("status", "UNKNOWN")
-        return {"status": status}
-    else:
-        return {
-            "status": "ERROR",
-            "details": response.text
-        }
