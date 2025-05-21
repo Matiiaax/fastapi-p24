@@ -82,13 +82,54 @@ async def handle_status(request: Request):
     data = await request.json()
     print("📥 Odebrano webhook od P24:", data)
 
-    if data.get("status") == "TRUE":
-        session_id = data.get("sessionId")
-        order_id = data.get("orderId")
-        amount = data.get("amount")
-        verify_transaction(session_id, order_id, amount)
+    session_id = data.get("sessionId")
+    order_id = data.get("orderId")
+    amount = data.get("amount")
+    currency = data.get("currency", "PLN")
+
+    if all([session_id, order_id, amount]):
+        verify_transaction(session_id, order_id, amount, currency)
 
     return {"status": "OK"}
+
+
+def verify_transaction(session_id: str, order_id: int, amount: int, currency="PLN"):
+    verify_data = {
+        "sessionId": session_id,
+        "orderId": order_id,
+        "amount": amount,
+        "currency": currency,
+        "crc": CRC
+    }
+
+    json_data = json.dumps(verify_data, separators=(',', ':'))
+    sign = hashlib.sha384(json_data.encode()).hexdigest()
+
+    payload = {
+        "merchantId": MERCHANT_ID,
+        "posId": MERCHANT_ID,
+        "sessionId": session_id,
+        "amount": amount,
+        "currency": currency,
+        "orderId": order_id,
+        "sign": sign
+    }
+
+    auth = base64.b64encode(f"{MERCHANT_ID}:{API_KEY}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {auth}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.put(
+        "https://secure.przelewy24.pl/api/v1/transaction/verify",
+        headers=headers,
+        json=payload
+    )
+
+    print("✅ Weryfikacja odpowiedź:", response.status_code, response.text)
+    return response.status_code == 200
+
 
 @app.get("/return")
 async def return_page(sessionId: str = ""):
