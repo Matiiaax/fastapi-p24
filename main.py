@@ -93,42 +93,7 @@ async def handle_status(request: Request):
     return {"status": "OK"}
 
 
-def verify_transaction(session_id: str, order_id: int, amount: int, currency="PLN"):
-    verify_data = {
-        "sessionId": session_id,
-        "orderId": order_id,
-        "amount": amount,
-        "currency": currency,
-        "crc": CRC
-    }
 
-    json_data = json.dumps(verify_data, separators=(',', ':'))
-    sign = hashlib.sha384(json_data.encode()).hexdigest()
-
-    payload = {
-        "merchantId": MERCHANT_ID,
-        "posId": MERCHANT_ID,
-        "sessionId": session_id,
-        "amount": amount,
-        "currency": currency,
-        "orderId": order_id,
-        "sign": sign
-    }
-
-    auth = base64.b64encode(f"{MERCHANT_ID}:{API_KEY}".encode()).decode()
-    headers = {
-        "Authorization": f"Basic {auth}",
-        "Content-Type": "application/json"
-    }
-
-    response = requests.put(
-        "https://secure.przelewy24.pl/api/v1/transaction/verify",
-        headers=headers,
-        json=payload
-    )
-
-    print("✅ Weryfikacja odpowiedź:", response.status_code, response.text)
-    return response.status_code == 200
 
 
 @app.get("/return")
@@ -202,17 +167,28 @@ def check_payment_status(sessionId: str):
 
 
 def verify_transaction(session_id: str, order_id: int, amount: int, currency="PLN"):
-    data = {
+    # 1. Dane wejściowe + log
+    print("🔧 Rozpoczynam weryfikację transakcji:")
+    print(f"  ➤ sessionId: {session_id}")
+    print(f"  ➤ orderId: {order_id}")
+    print(f"  ➤ amount: {amount}")
+    print(f"  ➤ currency: {currency}")
+
+    # 2. Przygotuj dane do podpisu
+    sign_data = {
         "sessionId": session_id,
         "orderId": order_id,
         "amount": amount,
         "currency": currency,
         "crc": CRC
     }
+    json_string = json.dumps(sign_data, separators=(',', ':'))
+    sign = hashlib.sha384(json_string.encode()).hexdigest()
 
-    json_data = json.dumps(data, separators=(',', ':'))
-    sign = hashlib.sha384(json_data.encode()).hexdigest()
+    print("📦 Sign JSON base string:", json_string)
+    print("🔏 Sign hash:", sign)
 
+    # 3. Przygotuj payload
     payload = {
         "merchantId": MERCHANT_ID,
         "posId": MERCHANT_ID,
@@ -223,20 +199,27 @@ def verify_transaction(session_id: str, order_id: int, amount: int, currency="PL
         "sign": sign
     }
 
+    print("📤 Payload verify:")
+    print(json.dumps(payload, indent=2))
+
+    # 4. Przygotuj nagłówki
     auth = base64.b64encode(f"{MERCHANT_ID}:{API_KEY}".encode()).decode()
     headers = {
         "Authorization": f"Basic {auth}",
         "Content-Type": "application/json"
     }
 
-    response = requests.post(
+    print("🔐 Headers:")
+    print(headers)
+
+    # 5. Wyślij zapytanie PUT do P24
+    response = requests.put(
         "https://secure.przelewy24.pl/api/v1/transaction/verify",
         headers=headers,
         json=payload
     )
 
-    print("✅ Weryfikacja odpowiedź:", response.status_code, response.text)
+    print("✅ Weryfikacja odpowiedź:", response.status_code)
+    print(response.text)
+
     return response.status_code == 200
-
-
-
