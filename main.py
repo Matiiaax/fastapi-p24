@@ -15,9 +15,9 @@ app.add_middleware(
 
 # 🔐 Wklej swoje dane z panelu Przelewy24
 
-API_KEY = "04b37c21b8a21f07fc1e4ede838a604e"
-MERCHANT_ID = 347149
-CRC = "f5909f6105929a02"
+API_KEY = 
+MERCHANT_ID = 
+CRC = 
 
 
 @app.get("/create-payment")
